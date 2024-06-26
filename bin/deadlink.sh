@@ -3,14 +3,17 @@
 deadlink() {
 	local NO_ABS=false
 	local NO_REL=false
+	local XDEV=false
 	while [ $# -gt 0 ]; do
 		case "$1" in
 		('-h'|'--help')
-			echo "Usage: $0 [--na|--no-absolute]|[--nr|--no-relative] [--] <directory>";
+			echo 'Usage: '"$0"' [--na|--no-absolute|--nr|--no-relative|-x|--xdev|--one-file-system] [--] [<directory>|.]';
 			exit 0;
 		;;
-		('--na'|'--no-abs'*) shift; NO_ABS=true ;;
+		('--na'|'--no-abs'*) shift ; NO_ABS=true ;;
 		('--nr'|'--no-rel'*) shift ; NO_REL=true ;;
+		('-x'|'--xdev'|'--one-file-system') shift ; XDEV=true ;;
+		('-X'|'--no-x'|'--no-xdev'|'--no-one-file-system') shift ; XDEV=false ;;
 		('--') shift; break ;;
 		('-'*) echo >&2 "Bad option $1"; exit 1 ;;
 		*) break;
@@ -21,7 +24,9 @@ deadlink() {
 		set -- .
 	fi
 	while [ $# -gt 0 ]; do
-		find "$1" -type l -printf 'p %P\nl %l\n' | {
+		local opt_xdev
+		${XDEV:-false} && opt_xdev='-xdev' || opt_xdev=''
+		find "$1" $opt_xdev -type l -printf 'p %P\nl %l\n' | {
 		while read -r type line; do
 			case "$type" in
 			(p)
